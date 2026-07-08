@@ -6,7 +6,7 @@ local Astral = loadstring(game:HttpGet("YOUR_RAW_GITHUB_URL_HERE"))()
 ```
 
 ## Creating a Window
-```
+```lua
 local Window = Astral:CreateWindow({
     Name = "Title of the library",
     ConfigName = "SaveName",
@@ -15,12 +15,12 @@ local Window = Astral:CreateWindow({
 ```
 
 ## Creating a Tab
-```
+```lua
 local Tab = Window:CreateTab("Tab 1")
 ```
 
 ## Creating a Paragraph
-```
+```lua
 Tab:CreateParagraph({
     Title = "Paragraph",
     Content = "Paragraph Content"
@@ -28,12 +28,12 @@ Tab:CreateParagraph({
 ```
 
 ## Creating a Divider
-```
+```lua
 Tab:CreateDivider()
 ```
 
 ## Notifying the user
-```
+```lua
 Window:Notify({
     Title = "Title!",
     Content = "Notification content..."
@@ -41,7 +41,7 @@ Window:Notify({
 ```
 
 ## Creating a Toggle
-```
+```lua
 Tab:CreateToggle({
     Name = "This is a toggle!",
     Flag = "ToggleFlag",
@@ -53,7 +53,7 @@ Tab:CreateToggle({
 ```
 
 ## Creating a Slider
-```
+```lua
 Tab:CreateSlider({
     Name = "Slider",
     Flag = "SliderFlag",
@@ -66,7 +66,7 @@ Tab:CreateSlider({
 ```
 
 ## Creating a Textbox
-```
+```lua
 Tab:CreateTextbox({
     Name = "Textbox",
     Flag = "TextboxFlag",
@@ -79,7 +79,7 @@ Tab:CreateTextbox({
 ```
 
 ## Creating a Color Picker
-```
+```lua
 Tab:CreateColorPicker({
     Name = "Colorpicker",
     Flag = "ColorFlag",
@@ -95,13 +95,13 @@ Tab:CreateColorPicker({
 -- Astral automatically saves to your specified 'ConfigFolder'.
 
 -- Accessing flags manually:
-```
+```lua
 print(Astral.Flags["ToggleFlag"])
 ```
 
 ## Example Script Using Astral lib
 
-```
+```lua
 local Astral = loadstring(game:HttpGet("YOUR_RAW_GITHUB_URL_HERE"))()
 
 local Window = Astral:CreateWindow({
