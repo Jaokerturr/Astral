@@ -1,7 +1,7 @@
 # Astral Library Documentation
 
 ## Booting the Library
-```
+```lua
 local Astral = loadstring(game:HttpGet("YOUR_RAW_GITHUB_URL_HERE"))()
 ```
 
