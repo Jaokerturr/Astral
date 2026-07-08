@@ -2,7 +2,7 @@
 
 ## Booting the Library
 ```lua
-local Astral = loadstring(game:HttpGet("(https://raw.githubusercontent.com/Jaokerturr/Astral/refs/heads/main/astral.lua)"))()
+local Astral = loadstring(game:HttpGet("https://raw.githubusercontent.com/Jaokerturr/Astral/refs/heads/main/astral.lua"))()
 ```
 
 ## Creating a Window
