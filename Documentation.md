@@ -1,7 +1,9 @@
 # Astral Library Documentation
 
 ## Booting the Library
-```local Astral = loadstring(game:HttpGet("YOUR_RAW_GITHUB_URL_HERE"))()```
+```
+local Astral = loadstring(game:HttpGet("YOUR_RAW_GITHUB_URL_HERE"))()
+```
 
 ## Creating a Window
 ```
@@ -13,7 +15,9 @@ local Window = Astral:CreateWindow({
 ```
 
 ## Creating a Tab
-```local Tab = Window:CreateTab("Tab 1")```
+```
+local Tab = Window:CreateTab("Tab 1")
+```
 
 ## Creating a Paragraph
 ```
@@ -24,7 +28,9 @@ Tab:CreateParagraph({
 ```
 
 ## Creating a Divider
-```Tab:CreateDivider()```
+```
+Tab:CreateDivider()
+```
 
 ## Notifying the user
 ```
@@ -89,11 +95,14 @@ Tab:CreateColorPicker({
 -- Astral automatically saves to your specified 'ConfigFolder'.
 
 -- Accessing flags manually:
-```print(Astral.Flags["ToggleFlag"])```
+```
+print(Astral.Flags["ToggleFlag"])
+```
 
 ## Example Script Using Astral lib
 
-```local Astral = loadstring(game:HttpGet("YOUR_RAW_GITHUB_URL_HERE"))()
+```
+local Astral = loadstring(game:HttpGet("YOUR_RAW_GITHUB_URL_HERE"))()
 
 local Window = Astral:CreateWindow({
     Name = "Example Title",
@@ -192,4 +201,5 @@ WorldTab:CreateColorPicker({
         Lighting.Ambient = Color
         Lighting.OutdoorAmbient = Color
     end,
-})```
+})
+```
