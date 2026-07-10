@@ -2,7 +2,7 @@
 
 ## Booting the Library
 ```lua
-local Astral = loadstring(game:HttpGet("https://raw.githubusercontent.com/Jaokerturr/Astral/refs/heads/main/astral.lua"))()
+local Astral = loadstring(game:HttpGet("[https://raw.githubusercontent.com/Jaokerturr/Astral/refs/heads/main/astral.lua](https://raw.githubusercontent.com/Jaokerturr/Astral/refs/heads/main/astral.lua)"))()
 ```
 
 ## Creating a Window
@@ -79,6 +79,7 @@ Tab:CreateTextbox({
 ```
 
 ## Creating a Color Picker
+-- Spawns the new 2D HSV map (Saturation/Value Square + Vertical Hue Slider)
 ```lua
 Tab:CreateColorPicker({
     Name = "Colorpicker",
@@ -100,9 +101,8 @@ print(Astral.Flags["ToggleFlag"])
 ```
 
 ## Example Script Using Astral lib
-
 ```lua
-local Astral = loadstring(game:HttpGet("YOUR_RAW_GITHUB_URL_HERE"))()
+local Astral = loadstring(game:HttpGet("[https://raw.githubusercontent.com/Jaokerturr/Astral/refs/heads/main/astral.lua](https://raw.githubusercontent.com/Jaokerturr/Astral/refs/heads/main/astral.lua)"))()
 
 local Window = Astral:CreateWindow({
     Name = "Example Title",
