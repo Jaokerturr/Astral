@@ -351,6 +351,27 @@ function Astral:CreateWindow(Config)
             cb(st)
         end
 
+        function TabElements:CreateButton(Config)
+            local bName = Config.Name or "Button"
+            local cb = Config.Callback or function() end
+            
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, 0, 0, 40)
+            btn.BackgroundColor3 = C.pill
+            btn.Text = bName
+            btn.Font = FONTM
+            btn.TextSize = 13
+            btn.TextColor3 = C.text
+            btn.AutoButtonColor = true
+            btn.Parent = container
+            corner(btn, 6)
+            strokeOf(btn, C.border, 0)
+
+            btn.MouseButton1Click:Connect(function()
+         cb()
+    end)
+end     
+
         function TabElements:CreateSlider(Config)
             local sName = Config.Name or "Slider"
             local flag = getAutoFlag(sName)
