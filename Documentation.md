@@ -52,6 +52,17 @@ Tab:CreateToggle({
 })
 ```
 
+## Creating a button
+```lua
+Tab:CreateButton({
+    Name = "Click Me!",
+    Callback = function()
+        -- Logic here
+        print("Button clicked!")
+    end
+})
+```
+
 ## Creating a Slider
 ```lua
 Tab:CreateSlider({
