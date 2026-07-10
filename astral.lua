@@ -1,8 +1,7 @@
-local Astral = {Flags = {}, ConfigName = "", ConfigFolder = "AstralConfigs"}
+local Astral = {Flags = {}, Elements = {}}
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
-local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 
 local C = {
@@ -13,10 +12,10 @@ local C = {
     hover = Color3.fromRGB(34, 34, 40),
     text = Color3.fromRGB(233, 233, 238),
     dim = Color3.fromRGB(150, 150, 160),
-    blue = Color3.fromRGB(72, 130, 248),
+    accent = Color3.fromRGB(72, 130, 248),
     trackOff = Color3.fromRGB(58, 58, 66),
     pill = Color3.fromRGB(33, 33, 40),
-    knob = Color3.fromRGB(240, 240, 245)
+    knob = Color3.fromRGB(255, 255, 255)
 }
 
 local FONT = Enum.Font.Gotham 
@@ -40,15 +39,13 @@ local function strokeOf(p, col, t)
 end
 
 function Astral:Save()
-    if self.ConfigName == "" then return end
-    if not isfolder(self.ConfigFolder) then makefolder(self.ConfigFolder) end
+    if not isfolder("AstralAutoSaves") then makefolder("AstralAutoSaves") end
     local data = HttpService:JSONEncode(self.Flags)
-    writefile(self.ConfigFolder .. "/" .. self.ConfigName .. ".json", data)
+    writefile("AstralAutoSaves/" .. tostring(game.GameId) .. ".json", data)
 end
 
 function Astral:Load()
-    if self.ConfigName == "" then return end
-    local path = self.ConfigFolder .. "/" .. self.ConfigName .. ".json"
+    local path = "AstralAutoSaves/" .. tostring(game.GameId) .. ".json"
     if isfile(path) then
         local s, r = pcall(function()
             return HttpService:JSONDecode(readfile(path))
@@ -63,8 +60,6 @@ end
 
 function Astral:CreateWindow(Config)
     local Title = Config.Name or "Astral Window"
-    self.ConfigName = Config.ConfigName or ""
-    self.ConfigFolder = Config.ConfigFolder or "AstralConfigs"
     self:Load()
     
     if CoreGui:FindFirstChild("AstralLibGui") then 
@@ -85,6 +80,7 @@ function Astral:CreateWindow(Config)
     main.BorderSizePixel = 0 
     main.Active = true 
     main.Draggable = true 
+    main.ClipsDescendants = true
     main.Parent = gui 
     corner(main, 12) 
     strokeOf(main, C.border, 0)
@@ -112,6 +108,44 @@ function Astral:CreateWindow(Config)
     tlabel.TextSize = 14 
     tlabel.TextXAlignment = Enum.TextXAlignment.Left 
     tlabel.Parent = header
+
+    local controls = Instance.new("Frame")
+    controls.Size = UDim2.new(0, 70, 1, 0)
+    controls.Position = UDim2.new(1, -80, 0, 0)
+    controls.BackgroundTransparency = 1
+    controls.Parent = header
+
+    local minBtn = Instance.new("TextButton")
+    minBtn.Size = UDim2.new(0, 30, 0, 30)
+    minBtn.Position = UDim2.new(0, 0, 0.5, -15)
+    minBtn.BackgroundTransparency = 1
+    minBtn.Font = FONTB
+    minBtn.Text = "-"
+    minBtn.TextColor3 = C.dim
+    minBtn.TextSize = 18
+    minBtn.Parent = controls
+
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0, 30, 0, 30)
+    closeBtn.Position = UDim2.new(0, 35, 0.5, -15)
+    closeBtn.BackgroundTransparency = 1
+    closeBtn.Font = FONTB
+    closeBtn.Text = "X"
+    closeBtn.TextColor3 = C.dim
+    closeBtn.TextSize = 16
+    closeBtn.Parent = controls
+
+    local isMinimized = false
+    minBtn.MouseButton1Click:Connect(function()
+        isMinimized = not isMinimized
+        TweenService:Create(main, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = isMinimized and UDim2.fromOffset(520, 44) or UDim2.fromOffset(520, 380)
+        }):Play()
+    end)
+
+    closeBtn.MouseButton1Click:Connect(function()
+        gui:Destroy()
+    end)
 
     local NotifArea = Instance.new("Frame")
     NotifArea.Size = UDim2.new(0, 250, 1, -20)
@@ -168,7 +202,12 @@ function Astral:CreateWindow(Config)
         NText.TextXAlignment = Enum.TextXAlignment.Left
         NText.TextWrapped = true
         NText.Parent = NFrame
-        task.delay(3, function() NFrame:Destroy() end)
+        task.delay(3, function() 
+            TweenService:Create(NFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+            TweenService:Create(NText, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            task.wait(0.3)
+            NFrame:Destroy() 
+        end)
     end
 
     function WindowElements:CreateTab(TabName)
@@ -209,6 +248,10 @@ function Astral:CreateWindow(Config)
         end)
 
         local TabElements = {}
+
+        local function getAutoFlag(name)
+            return TabName .. "_" .. name:gsub(" ", "")
+        end
 
         function TabElements:CreateParagraph(Config)
             local pName = Config.Title or "Paragraph"
@@ -254,7 +297,7 @@ function Astral:CreateWindow(Config)
 
         function TabElements:CreateToggle(Config)
             local tName = Config.Name or "Toggle"
-            local flag = Config.Flag or tName
+            local flag = getAutoFlag(tName)
             local cb = Config.Callback or function() end
             
             local default = Astral.Flags[flag]
@@ -276,14 +319,14 @@ function Astral:CreateWindow(Config)
             lbl.Font = FONTM 
             lbl.Text = tName 
             lbl.TextColor3 = C.text 
-            lbl.TextSize = 14 
+            lbl.TextSize = 13 
             lbl.TextXAlignment = Enum.TextXAlignment.Left 
             lbl.Parent = btnRow 
             
             local track = Instance.new("Frame") 
             track.Size = UDim2.fromOffset(38, 20) 
             track.Position = UDim2.new(1, -48, 0.5, -10) 
-            track.BackgroundColor3 = default and C.blue or C.trackOff 
+            track.BackgroundColor3 = default and C.accent or C.trackOff 
             track.Parent = btnRow 
             corner(track, 10) 
             
@@ -298,8 +341,8 @@ function Astral:CreateWindow(Config)
             btnRow.MouseButton1Click:Connect(function() 
                 st = not st 
                 Astral.Flags[flag] = st
-                TweenService:Create(track, TweenInfo.new(0.15), {BackgroundColor3 = st and C.blue or C.trackOff}):Play() 
-                TweenService:Create(knob, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+                TweenService:Create(track, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {BackgroundColor3 = st and C.accent or C.trackOff}):Play() 
+                TweenService:Create(knob, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
                     Position = st and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
                 }):Play() 
                 cb(st)
@@ -310,7 +353,7 @@ function Astral:CreateWindow(Config)
 
         function TabElements:CreateSlider(Config)
             local sName = Config.Name or "Slider"
-            local flag = Config.Flag or sName
+            local flag = getAutoFlag(sName)
             local min = Config.Range[1] or 0
             local max = Config.Range[2] or 100
             local cb = Config.Callback or function() end
@@ -321,13 +364,15 @@ function Astral:CreateWindow(Config)
             local current = default
 
             local f = Instance.new("Frame")
-            f.Size = UDim2.new(1, 0, 0, 50)
-            f.BackgroundTransparency = 1
+            f.Size = UDim2.new(1, 0, 0, 55)
+            f.BackgroundColor3 = C.colbg
             f.Parent = container
+            corner(f, 6)
+            strokeOf(f, C.border, 0)
 
             local lbl = Instance.new("TextLabel")
-            lbl.Size = UDim2.new(1, -40, 0, 20)
-            lbl.Position = UDim2.fromOffset(10, 0)
+            lbl.Size = UDim2.new(1, -60, 0, 25)
+            lbl.Position = UDim2.fromOffset(10, 5)
             lbl.BackgroundTransparency = 1
             lbl.Font = FONTM
             lbl.Text = sName
@@ -336,40 +381,41 @@ function Astral:CreateWindow(Config)
             lbl.TextXAlignment = Enum.TextXAlignment.Left
             lbl.Parent = f
 
-            local valLbl = Instance.new("TextLabel")
-            valLbl.Size = UDim2.new(0, 40, 0, 20)
-            valLbl.Position = UDim2.new(1, -50, 0, 0)
-            valLbl.BackgroundTransparency = 1
-            valLbl.Font = FONTM
-            valLbl.Text = tostring(current)
-            valLbl.TextColor3 = C.dim
-            valLbl.TextSize = 13
-            valLbl.TextXAlignment = Enum.TextXAlignment.Right
-            valLbl.Parent = f
+            local valBox = Instance.new("TextBox")
+            valBox.Size = UDim2.new(0, 45, 0, 20)
+            valBox.Position = UDim2.new(1, -55, 0, 8)
+            valBox.BackgroundColor3 = C.bg
+            valBox.Font = FONTM
+            valBox.Text = tostring(current)
+            valBox.TextColor3 = C.text
+            valBox.TextSize = 12
+            valBox.Parent = f
+            corner(valBox, 4)
+            strokeOf(valBox, C.border, 0)
 
             local track = Instance.new("TextButton")
-            track.Size = UDim2.new(1, -20, 0, 6)
-            track.Position = UDim2.new(0, 10, 0, 30)
-            track.BackgroundColor3 = C.colbg
+            track.Size = UDim2.new(1, -20, 0, 8)
+            track.Position = UDim2.new(0, 10, 0, 35)
+            track.BackgroundColor3 = C.bg
             track.Text = ""
             track.AutoButtonColor = false
             track.Parent = f
-            corner(track, 3)
+            corner(track, 4)
             strokeOf(track, C.border, 0)
 
             local fill = Instance.new("Frame")
             local startSize = math.clamp((current - min) / (max - min), 0, 1)
             fill.Size = UDim2.new(startSize, 0, 1, 0)
-            fill.BackgroundColor3 = C.blue
+            fill.BackgroundColor3 = C.accent
             fill.Parent = track
-            corner(fill, 3)
+            corner(fill, 4)
 
             local dragging = false
             local function updateSlider(input)
                 local pos = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
                 local value = math.floor(min + ((max - min) * pos))
-                fill.Size = UDim2.new(pos, 0, 1, 0)
-                valLbl.Text = tostring(value)
+                TweenService:Create(fill, TweenInfo.new(0.05), {Size = UDim2.new(pos, 0, 1, 0)}):Play()
+                valBox.Text = tostring(value)
                 Astral.Flags[flag] = value
                 cb(value)
                 Astral:Save()
@@ -393,12 +439,118 @@ function Astral:CreateWindow(Config)
                     updateSlider(input)
                 end
             end)
+
+            valBox.FocusLost:Connect(function()
+                local num = tonumber(valBox.Text)
+                if num then
+                    num = math.clamp(num, min, max)
+                    local pos = (num - min) / (max - min)
+                    TweenService:Create(fill, TweenInfo.new(0.2), {Size = UDim2.new(pos, 0, 1, 0)}):Play()
+                    valBox.Text = tostring(num)
+                    Astral.Flags[flag] = num
+                    cb(num)
+                    Astral:Save()
+                else
+                    valBox.Text = tostring(Astral.Flags[flag])
+                end
+            end)
+
             cb(current)
+        end
+
+        function TabElements:CreateDropdown(Config)
+            local dName = Config.Name or "Dropdown"
+            local flag = getAutoFlag(dName)
+            local options = Config.Options or {}
+            local cb = Config.Callback or function() end
+
+            local default = Astral.Flags[flag]
+            if not default then default = Config.CurrentOption or options[1] or "" end
+            Astral.Flags[flag] = default
+
+            local f = Instance.new("Frame")
+            f.Size = UDim2.new(1, 0, 0, 45)
+            f.BackgroundColor3 = C.colbg
+            f.ClipsDescendants = true
+            f.Parent = container
+            corner(f, 6)
+            strokeOf(f, C.border, 0)
+
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, 0, 0, 45)
+            btn.BackgroundTransparency = 1
+            btn.Text = ""
+            btn.Parent = f
+
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, -20, 1, 0)
+            lbl.Position = UDim2.fromOffset(10, 0)
+            lbl.BackgroundTransparency = 1
+            lbl.Font = FONTM
+            lbl.Text = dName .. " : " .. default
+            lbl.TextColor3 = C.text
+            lbl.TextSize = 13
+            lbl.TextXAlignment = Enum.TextXAlignment.Left
+            lbl.Parent = btn
+
+            local icon = Instance.new("TextLabel")
+            icon.Size = UDim2.new(0, 20, 0, 20)
+            icon.Position = UDim2.new(1, -30, 0.5, -10)
+            icon.BackgroundTransparency = 1
+            icon.Font = FONTB
+            icon.Text = "+"
+            icon.TextColor3 = C.dim
+            icon.TextSize = 16
+            icon.Parent = btn
+
+            local dropContainer = Instance.new("ScrollingFrame")
+            dropContainer.Size = UDim2.new(1, -20, 1, -55)
+            dropContainer.Position = UDim2.fromOffset(10, 45)
+            dropContainer.BackgroundTransparency = 1
+            dropContainer.ScrollBarThickness = 2
+            dropContainer.ScrollBarImageColor3 = C.border
+            dropContainer.Parent = f
+            
+            local list = Instance.new("UIListLayout")
+            list.Padding = UDim.new(0, 4)
+            list.Parent = dropContainer
+
+            local isOpen = false
+            btn.MouseButton1Click:Connect(function()
+                isOpen = not isOpen
+                icon.Text = isOpen and "-" or "+"
+                local targetHeight = isOpen and math.clamp(#options * 34 + 55, 45, 150) or 45
+                TweenService:Create(f, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Size = UDim2.new(1, 0, 0, targetHeight)}):Play()
+            end)
+
+            for _, opt in ipairs(options) do
+                local optBtn = Instance.new("TextButton")
+                optBtn.Size = UDim2.new(1, -10, 0, 30)
+                optBtn.BackgroundColor3 = C.pill
+                optBtn.Font = FONTM
+                optBtn.Text = opt
+                optBtn.TextColor3 = C.dim
+                optBtn.TextSize = 12
+                optBtn.Parent = dropContainer
+                corner(optBtn, 4)
+                strokeOf(optBtn, C.border, 0)
+
+                optBtn.MouseButton1Click:Connect(function()
+                    Astral.Flags[flag] = opt
+                    lbl.Text = dName .. " : " .. opt
+                    isOpen = false
+                    icon.Text = "+"
+                    TweenService:Create(f, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Size = UDim2.new(1, 0, 0, 45)}):Play()
+                    cb(opt)
+                    Astral:Save()
+                end)
+            end
+            cb(default)
         end
 
         function TabElements:CreateTextbox(Config)
             local tName = Config.Name or "Textbox"
-            local flag = Config.Flag or tName
+            local flag = getAutoFlag(tName)
             local placeholder = Config.PlaceholderText or "Input here..."
             local clearOnFocus = Config.RemoveTextAfterFocusLost or false
             local cb = Config.Callback or function() end
@@ -408,12 +560,14 @@ function Astral:CreateWindow(Config)
             if not clearOnFocus then Astral.Flags[flag] = default end
 
             local f = Instance.new("Frame")
-            f.Size = UDim2.new(1, 0, 0, 40)
-            f.BackgroundTransparency = 1
+            f.Size = UDim2.new(1, 0, 0, 45)
+            f.BackgroundColor3 = C.colbg
             f.Parent = container
+            corner(f, 6)
+            strokeOf(f, C.border, 0)
 
             local lbl = Instance.new("TextLabel")
-            lbl.Size = UDim2.new(1, -160, 1, 0)
+            lbl.Size = UDim2.new(1, -170, 1, 0)
             lbl.Position = UDim2.fromOffset(10, 0)
             lbl.BackgroundTransparency = 1
             lbl.Font = FONTM
@@ -424,9 +578,9 @@ function Astral:CreateWindow(Config)
             lbl.Parent = f
 
             local box = Instance.new("TextBox")
-            box.Size = UDim2.new(0, 140, 0, 30)
-            box.Position = UDim2.new(1, -150, 0.5, -15)
-            box.BackgroundColor3 = C.pill
+            box.Size = UDim2.new(0, 150, 0, 30)
+            box.Position = UDim2.new(1, -160, 0.5, -15)
+            box.BackgroundColor3 = C.bg
             box.PlaceholderText = placeholder
             box.Text = ""
             box.Font = FONTM
@@ -454,24 +608,30 @@ function Astral:CreateWindow(Config)
 
         function TabElements:CreateColorPicker(Config)
             local cName = Config.Name or "Color Picker"
-            local flag = Config.Flag or cName
+            local flag = getAutoFlag(cName)
             local cb = Config.Callback or function() end
 
             local default = Config.CurrentColor or Color3.fromRGB(255, 255, 255)
             local saved = Astral.Flags[flag]
+            
             if type(saved) == "table" and saved.R and saved.G and saved.B then
                 default = Color3.new(saved.R, saved.G, saved.B)
             else
                 Astral.Flags[flag] = {R = default.R, G = default.G, B = default.B}
             end
 
+            local h, s, v = default:ToHSV()
+
             local f = Instance.new("Frame")
-            f.Size = UDim2.new(1, 0, 0, 40)
-            f.BackgroundTransparency = 1
+            f.Size = UDim2.new(1, 0, 0, 45)
+            f.BackgroundColor3 = C.colbg
+            f.ClipsDescendants = true
             f.Parent = container
+            corner(f, 6)
+            strokeOf(f, C.border, 0)
 
             local lbl = Instance.new("TextLabel")
-            lbl.Size = UDim2.new(1, -60, 1, 0)
+            lbl.Size = UDim2.new(1, -60, 0, 45)
             lbl.Position = UDim2.fromOffset(10, 0)
             lbl.BackgroundTransparency = 1
             lbl.Font = FONTM
@@ -482,8 +642,8 @@ function Astral:CreateWindow(Config)
             lbl.Parent = f
 
             local display = Instance.new("TextButton")
-            display.Size = UDim2.new(0, 40, 0, 24)
-            display.Position = UDim2.new(1, -50, 0.5, -12)
+            display.Size = UDim2.new(0, 45, 0, 25)
+            display.Position = UDim2.new(1, -55, 0, 10)
             display.BackgroundColor3 = default
             display.Text = ""
             display.AutoButtonColor = false
@@ -491,82 +651,156 @@ function Astral:CreateWindow(Config)
             corner(display, 4)
             strokeOf(display, C.border, 0)
 
-            local dropdown = Instance.new("Frame")
-            dropdown.Size = UDim2.new(1, 0, 0, 100)
-            dropdown.BackgroundColor3 = C.colbg
-            dropdown.Visible = false
-            dropdown.Parent = container
-            corner(dropdown, 6)
+            local controlsArea = Instance.new("Frame")
+            controlsArea.Size = UDim2.new(1, -20, 0, 110)
+            controlsArea.Position = UDim2.fromOffset(10, 50)
+            controlsArea.BackgroundTransparency = 1
+            controlsArea.Parent = f
 
-            local function makeRgbSlider(name, yPos, colorComponent, baseValue)
-                local slbl = Instance.new("TextLabel")
-                slbl.Size = UDim2.new(0, 20, 0, 20)
-                slbl.Position = UDim2.new(0, 10, 0, yPos)
-                slbl.BackgroundTransparency = 1
-                slbl.Text = name
-                slbl.TextColor3 = C.dim
-                slbl.Font = FONTB
-                slbl.TextSize = 12
-                slbl.Parent = dropdown
+            -- SV 2D MAP
+            local svMap = Instance.new("TextButton")
+            svMap.Size = UDim2.new(1, -30, 1, 0)
+            svMap.Position = UDim2.new(0, 0, 0, 0)
+            svMap.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+            svMap.Text = ""
+            svMap.AutoButtonColor = false
+            svMap.ClipsDescendants = true
+            svMap.Parent = controlsArea
+            corner(svMap, 4)
+            strokeOf(svMap, C.border, 0)
 
-                local t = Instance.new("TextButton")
-                t.Size = UDim2.new(1, -50, 0, 6)
-                t.Position = UDim2.new(0, 40, 0, yPos + 7)
-                t.BackgroundColor3 = C.bg
-                t.Text = ""
-                t.AutoButtonColor = false
-                t.Parent = dropdown
-                corner(t, 3)
+            local satGradient = Instance.new("Frame")
+            satGradient.Size = UDim2.new(1, 0, 1, 0)
+            satGradient.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            satGradient.BorderSizePixel = 0
+            satGradient.Parent = svMap
+            
+            local uigSat = Instance.new("UIGradient")
+            uigSat.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0),
+                NumberSequenceKeypoint.new(1, 1)
+            })
+            uigSat.Parent = satGradient
 
-                local fill = Instance.new("Frame")
-                fill.Size = UDim2.new(baseValue, 0, 1, 0)
-                fill.BackgroundColor3 = colorComponent
-                fill.Parent = t
-                corner(fill, 3)
-                return t, fill
-            end
+            local valGradient = Instance.new("Frame")
+            valGradient.Size = UDim2.new(1, 0, 1, 0)
+            valGradient.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            valGradient.BorderSizePixel = 0
+            valGradient.Parent = svMap
+            
+            local uigVal = Instance.new("UIGradient")
+            uigVal.Rotation = 90
+            uigVal.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 1),
+                NumberSequenceKeypoint.new(1, 0)
+            })
+            uigVal.Parent = valGradient
 
-            local rT, rF = makeRgbSlider("R", 10, Color3.fromRGB(255, 50, 50), default.R)
-            local gT, gF = makeRgbSlider("G", 40, Color3.fromRGB(50, 255, 50), default.G)
-            local bT, bF = makeRgbSlider("B", 70, Color3.fromRGB(50, 150, 255), default.B)
+            local svCursor = Instance.new("Frame")
+            svCursor.Size = UDim2.fromOffset(8, 8)
+            svCursor.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            svCursor.Position = UDim2.new(s, -4, 1 - v, -4)
+            svCursor.Parent = svMap
+            corner(svCursor, 4)
+            strokeOf(svCursor, Color3.fromRGB(0, 0, 0), 0)
 
-            local currentColor = default
+            -- VERTICAL HUE SLIDER
+            local hueSlider = Instance.new("TextButton")
+            hueSlider.Size = UDim2.new(0, 20, 1, 0)
+            hueSlider.Position = UDim2.new(1, -20, 0, 0)
+            hueSlider.Text = ""
+            hueSlider.AutoButtonColor = false
+            hueSlider.Parent = controlsArea
+            corner(hueSlider, 4)
+            strokeOf(hueSlider, C.border, 0)
+
+            local hueGradient = Instance.new("UIGradient")
+            hueGradient.Rotation = 90
+            hueGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+                ColorSequenceKeypoint.new(0.167, Color3.fromRGB(255, 255, 0)),
+                ColorSequenceKeypoint.new(0.333, Color3.fromRGB(0, 255, 0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+                ColorSequenceKeypoint.new(0.667, Color3.fromRGB(0, 0, 255)),
+                ColorSequenceKeypoint.new(0.833, Color3.fromRGB(255, 0, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+            })
+            hueGradient.Parent = hueSlider
+
+            local hueCursor = Instance.new("Frame")
+            hueCursor.Size = UDim2.new(1, 0, 0, 4)
+            hueCursor.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            hueCursor.Position = UDim2.new(0, 0, 1 - h, -2)
+            hueCursor.Parent = hueSlider
+            strokeOf(hueCursor, Color3.fromRGB(0, 0, 0), 0)
+
             local function updateColor()
-                display.BackgroundColor3 = currentColor
-                Astral.Flags[flag] = {R = currentColor.R, G = currentColor.G, B = currentColor.B}
-                cb(currentColor)
+                local color = Color3.fromHSV(h, s, v)
+                display.BackgroundColor3 = color
+                svMap.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+                Astral.Flags[flag] = {R = color.R, G = color.G, B = color.B}
+                cb(color)
                 Astral:Save()
             end
 
-            local function attachSlider(btn, fill, channel)
-                local dragging = false
-                btn.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true end
-                end)
-                UserInputService.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
-                end)
-                UserInputService.InputChanged:Connect(function(input)
-                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                        local pos = math.clamp((input.Position.X - btn.AbsolutePosition.X) / btn.AbsoluteSize.X, 0, 1)
-                        fill.Size = UDim2.new(pos, 0, 1, 0)
-                        local r, g, b = currentColor.R, currentColor.G, currentColor.B
-                        if channel == "R" then r = pos elseif channel == "G" then g = pos else b = pos end
-                        currentColor = Color3.new(r, g, b)
-                        updateColor()
-                    end
-                end)
+            local draggingSV = false
+            local draggingHue = false
+
+            local function handleSV(input)
+                local pos = Vector2.new(
+                    math.clamp((input.Position.X - svMap.AbsolutePosition.X) / svMap.AbsoluteSize.X, 0, 1),
+                    math.clamp((input.Position.Y - svMap.AbsolutePosition.Y) / svMap.AbsoluteSize.Y, 0, 1)
+                )
+                s = pos.X
+                v = 1 - pos.Y
+                TweenService:Create(svCursor, TweenInfo.new(0.05), {Position = UDim2.new(s, -4, 1 - v, -4)}):Play()
+                updateColor()
             end
 
-            attachSlider(rT, rF, "R")
-            attachSlider(gT, gF, "G")
-            attachSlider(bT, bF, "B")
+            local function handleHue(input)
+                local posY = math.clamp((input.Position.Y - hueSlider.AbsolutePosition.Y) / hueSlider.AbsoluteSize.Y, 0, 1)
+                h = 1 - posY
+                TweenService:Create(hueCursor, TweenInfo.new(0.05), {Position = UDim2.new(0, 0, posY, -2)}):Play()
+                updateColor()
+            end
 
-            display.MouseButton1Click:Connect(function()
-                dropdown.Visible = not dropdown.Visible
-                f.Size = dropdown.Visible and UDim2.new(1, 0, 0, 145) or UDim2.new(1, 0, 0, 40)
+            svMap.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingSV = true
+                    handleSV(input)
+                end
             end)
-            cb(currentColor)
+
+            hueSlider.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingHue = true
+                    handleHue(input)
+                end
+            end)
+
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    draggingSV = false
+                    draggingHue = false
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                    if draggingSV then handleSV(input) end
+                    if draggingHue then handleHue(input) end
+                end
+            end)
+
+            local isOpen = false
+            display.MouseButton1Click:Connect(function()
+                isOpen = not isOpen
+                TweenService:Create(f, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {
+                    Size = isOpen and UDim2.new(1, 0, 0, 170) or UDim2.new(1, 0, 0, 45)
+                }):Play()
+            end)
+
+            cb(default)
         end
 
         return TabElements
