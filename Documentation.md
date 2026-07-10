@@ -103,7 +103,6 @@ Tab:CreateDropdown({
 ```
 
 ## Creating a Color Picker
--- Spawns the new 2D HSV map (Saturation/Value Square + Vertical Hue Slider)
 ```lua
 Tab:CreateColorPicker({
     Name = "Colorpicker",
@@ -116,17 +115,17 @@ Tab:CreateColorPicker({
 ```
 
 ## Flags and Saving
--- The 'Flag' argument is the ID used to save your data in the JSON file. 
--- Astral automatically saves to your specified 'ConfigFolder'.
+ The 'Flag' argument is the ID used to save your data in the JSON file. 
+ Astral automatically saves to your specified 'ConfigFolder'.
 
--- Accessing flags manually:
+ Accessing flags manually:
 ```lua
 print(Astral.Flags["ToggleFlag"])
 ```
 
 ## Example Script Using Astral lib
 ```lua
-local Astral = loadstring(game:HttpGet("[https://raw.githubusercontent.com/Jaokerturr/Astral/refs/heads/main/astral.lua](https://raw.githubusercontent.com/Jaokerturr/Astral/refs/heads/main/astral.lua)"))()
+local Astral = loadstring(game:HttpGet("https://raw.githubusercontent.com/Jaokerturr/Astral/refs/heads/main/astral.lua"))()
 
 local Window = Astral:CreateWindow({
     Name = "Example Title",
@@ -137,9 +136,10 @@ local Window = Astral:CreateWindow({
 local PlayerTab = Window:CreateTab("Player")
 local WorldTab = Window:CreateTab("World")
 
+local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local Lighting = game:GetService("Lighting")
+local SelectedUsername = nil
 
 PlayerTab:CreateParagraph({
     Title = "Local Player Modifications",
@@ -172,29 +172,43 @@ PlayerTab:CreateSlider({
     end,
 })
 
-PlayerTab:CreateTextbox({
-    Name = "Teleport to Player",
-    Flag = "TP_Box",
-    PlaceholderText = "Enter Username...",
-    RemoveTextAfterFocusLost = true,
-    Callback = function(Text)
-        local target
-        for _, v in pairs(Players:GetPlayers()) do
-            if string.sub(string.lower(v.Name), 1, string.len(Text)) == string.lower(Text) then
-                target = v
-                break
-            end
-        end
+local function GetPlayerList()
+    local Options = {}
+    for _, Player in pairs(Players:GetPlayers()) do
+        table.insert(Options, Player.DisplayName .. " (" .. Player.Name .. ")")
+    end
+    return Options
+end
 
-        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
-                Window:Notify({Title = "Teleported", Content = "Moved to " .. target.Name})
+PlayerTab:CreateDropdown({
+    Name = "Select Player",
+    Flag = "TP_Dropdown",
+    Options = GetPlayerList(),
+    Callback = function(Value)
+        local Username = string.match(Value, "%((.+)%)$")
+        SelectedUsername = Username
+    end
+})
+
+PlayerTab:CreateButton({
+    Name = "Teleport to Player",
+	Flag = "TpBtn",
+    Callback = function()
+        if SelectedUsername then
+            local Target = Players:FindFirstChild(SelectedUsername)
+            
+            if Target and Target.Character and Target.Character:FindFirstChild("HumanoidRootPart") then
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = Target.Character.HumanoidRootPart.CFrame
+                    Window:Notify({Title = "Teleported", Content = "Moved to " .. Target.Name})
+                end
+            else
+                Window:Notify({Title = "Error", Content = "Player not found or character missing."})
             end
         else
-            Window:Notify({Title = "Error", Content = "Player not found."})
+            Window:Notify({Title = "Error", Content = "Please select a player first."})
         end
-    end,
+    end
 })
 
 WorldTab:CreateParagraph({
