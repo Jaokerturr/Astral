@@ -78,6 +78,19 @@ Tab:CreateTextbox({
 })
 ```
 
+## Creating a DropDown
+```lua
+Tab:CreateDropdown({
+    Name = "Dropdown",
+    Flag = "DropdownFlag",
+    Options = {"Option 1", "Option 2", "Option 3"},
+    Callback = function(Value)
+        -- Logic here
+        print("Selected: " .. Value)
+    end
+})
+```
+
 ## Creating a Color Picker
 -- Spawns the new 2D HSV map (Saturation/Value Square + Vertical Hue Slider)
 ```lua
